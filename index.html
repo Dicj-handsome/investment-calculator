@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投资回报计算器</title>
+    <style>
+        /* 保持原始输入页面样式完全不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .calculator-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin: 1.5rem 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.8rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .calc-button {
+            background: #3498db;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 1rem;
+        }
+
+        .calc-button:hover {
+            background: #2980b9;
+        }
+
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            position: relative;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        .result-table th,
+        .result-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .result-table th {
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .total-result {
+            font-size: 1.2rem;
+            color: #27ae60;
+            text-align: right;
+            margin-top: 1.5rem;
+        }
+
+        .print-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1.5rem;
+        }
+
+        .print-button {
+            background: #27ae60;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .print-button:hover {
+            background: #219a52;
+        }
+
+        /* 仅修改打印相关样式 */
+        @media print {
+            body * {
+                visibility: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            #printContainer,
+            #printContainer * {
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            #printContainer {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                padding: 20px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* 新增打印时间样式 */
+            .print-header {
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                margin-bottom: 2rem !important;
+            }
+
+            .print-time {
+                font-size: 14px !important;
+                color: #666 !important;
+                text-align: right;
+                width: 50%;
+            }
+
+            .print-title {
+                font-size: 24px !important;
+                text-align: left !important;
+                margin: 0 !important;
+                width: 50%;
+            }
+
+            /* 新增页码样式 */
+            @page {
+                size: A4;
+                margin: 15mm;
+                
+                @bottom-center {
+                    content: counter(page) " / " counter(pages);
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    font-size: 12px;
+                    color: #666;
+                }
+            }
+
+            /* 保持原始打印样式 */
+            .print-table {
+                width: 100% !important;
+                margin: 1.5rem 0 !important;
+                border: 1px solid #ddd !important;
+                border-collapse: collapse !important;
+            }
+
+            .print-table th,
+            .print-table td {
+                color: #000 !important;
+                background: transparent !important;
+                padding: 8px !important;
+                border: 1px solid #ddd !important;
+            }
+
+            .print-summary strong {
+                font-size: 1.2em !important;
+                color: #000 !important;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 保持原始输入页面结构完全不变 -->
+    <div class="calculator-container">
+        <h2>投资回报计算器</h2>
+        
+        <div class="input-group">
+            <label for="principal">本金金额（元）:</label>
+            <input type="number" id="principal" step="1000" min="0" required>
+        </div>
+
+        <div class="input-group">
+            <label for="rate">年化利率（%）:</label>
+            <input type="number" id="rate" step="0.1" min="0" max="50" required>
+        </div>
+
+        <div class="input-group">
+            <label for="years">投资年限:</label>
+            <input type="number" id="years" min="1" max="50" required>
+        </div>
+
+        <button onclick="calculateROI()" class="calc-button">开始计算</button>
+
+        <div id="result" class="result-box hidden">
+            <div class="print-header">
+                <button onclick="preparePrint()" class="print-button">打印报告</button>
+            </div>
+            
+            <h3>计算结果</h3>
+            <table class="result-table">
+                <tr>
+                    <th>年份</th>
+                    <th>本金增长</th>
+                    <th>利息累积</th>
+                </tr>
+                <tbody id="resultBody"></tbody>
+            </table>
+            <p class="total-result">最终总额：<span id="totalAmount">0</span> 元</p>
+        </div>
+    </div>
+
+    <div id="printContainer" class="hidden"></div>
+
+    <script>
+        // 保持原始计算逻辑不变
+        function calculateROI() {
+            const principal = parseFloat(document.getElementById('principal').value);
+            const rate = parseFloat(document.getElementById('rate').value) / 100;
+            const years = parseInt(document.getElementById('years').value);
+
+            if (isNaN(principal) || isNaN(rate) || isNaN(years)) {
+                alert("请输入有效的数值");
+                return;
+            }
+
+            let currentAmount = principal;
+            let resultHTML = '';
+            
+            for (let year = 1; year <= years; year++) {
+                const interest = currentAmount * rate;
+                currentAmount += interest;
+                
+                resultHTML += `
+                    <tr>
+                        <td>第${year}年</td>
+                        <td>¥${currentAmount.toFixed(2)}</td>
+                        <td>¥${interest.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            document.getElementById('resultBody').innerHTML = resultHTML;
+            document.getElementById('totalAmount').textContent = currentAmount.toFixed(2);
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 增强打印功能
+        function preparePrint() {
+            const now = new Date();
+            const printTime = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            if (document.getElementById('result').classList.contains('hidden')) {
+                alert("请先进行计算再打印");
+                return;
+            }
+
+            const resultBodyClone = document.getElementById('resultBody').cloneNode(true);
+            const principal = document.getElementById('principal').value || '0';
+            const rate = document.getElementById('rate').value || '0';
+            const years = document.getElementById('years').value || '0';
+            const total = document.getElementById('totalAmount').textContent || '0';
+
+            const printContent = document.createElement('div');
+            printContent.innerHTML = `
+                <div class="print-report">
+                    <div class="print-header">
+                        <h2 class="print-title">投资回报分析报告</h2>
+                        <div class="print-time">打印时间：${printTime}</div>
+                    </div>
+                    <div class="print-section">
+                        <h3>输入参数</h3>
+                        <table class="print-table">
+                            ${generateParamRow('本金金额', '¥'+principal)}
+                            ${generateParamRow('年化利率', rate+'%')}
+                            ${generateParamRow('投资年限', years+'年')}
+                        </table>
+                    </div>
+                    <div class="print-section">
+                        <h3>年度明细</h3>
+                        <table class="print-table">
+                            <thead>
+                                <tr>
+                                    <th>年份</th>
+                                    <th>本金增长</th>
+                                    <th>利息累积</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${resultBodyClone.innerHTML}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="print-summary">
+                        <strong>最终总额：¥${total}</strong>
+                    </div>
+                </div>
+            `;
+
+            const printContainer = document.getElementById('printContainer');
+            printContainer.innerHTML = '';
+            printContainer.appendChild(printContent);
+            printContainer.classList.remove('hidden');
+
+            const cleanup = () => {
+                printContainer.classList.add('hidden');
+                window.removeEventListener('afterprint', cleanup);
+            };
+            window.addEventListener('afterprint', cleanup);
+
+            window.print();
+        }
+
+        function generateParamRow(label, value) {
+            return `
+                <tr>
+                    <td style="width: 30%"><strong>${label}</strong></td>
+                    <td style="width: 70%">${value}</td>
+                </tr>
+            `;
+        }
+    </script>
+</body>
+</html>
